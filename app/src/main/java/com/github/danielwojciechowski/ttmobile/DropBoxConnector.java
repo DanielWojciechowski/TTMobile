@@ -11,25 +11,33 @@ import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.ProgressListener;
 import com.dropbox.client2.exception.DropboxException;
 
+import org.json.JSONException;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
-public class UploadToServer extends AsyncTask<Void, Long, Boolean> {
+public class DropBoxConnector extends AsyncTask<Void, Long, Boolean> {
 
-    private DropboxAPI<?> mApi;
     private DropboxAPI.UploadRequest mRequest;
     private ProgressListener progressListener;
     private Context mContext;
-    private final ProgressDialog mDialog;
-    private final String picturePath = TTMainActivity.getPicturePath();
-    private final String fileName = getLastPartOfUri(picturePath);
-    private final File tempFile = new File(picturePath);
-    private long mFileLen = tempFile.length();
+    private ProgressDialog mDialog;
+    private String fileName;
+    private File tempFile;
+    private long mFileLen;
+    private int req;
 
-    public UploadToServer(Context context, DropboxAPI<?> api) {
+    public DropBoxConnector(Context context) {
+        req = 1;
+
+        String picturePath = TTMainActivity.getPicturePath();
+        fileName = getLastPartOfUri(picturePath);
+        tempFile = new File(picturePath);
+        mFileLen = tempFile.length();
+
         mContext = context.getApplicationContext();
         progressListener = new ProgressListener() {
             @Override
@@ -38,7 +46,6 @@ public class UploadToServer extends AsyncTask<Void, Long, Boolean> {
                 publishProgress((long) progress);
             }
         };
-        mApi = api;
 
         mDialog = new ProgressDialog(context);
         mDialog.setMax(100);
@@ -54,19 +61,39 @@ public class UploadToServer extends AsyncTask<Void, Long, Boolean> {
         mDialog.show();
     }
 
+    public DropBoxConnector() {
+        req = 2;
+    }
+
     protected Boolean doInBackground(Void... params) {
+        try {
+            switch (req){
+                case 1 : {
+                    return uploadFile();
+                }
+                case 2 : {
+                    TTMainActivity.setUserUID(Long.toString(TTMainActivity.getmApi().accountInfo().uid));
+                    break;
+                }
+            }
+        } catch (DropboxException e) {
+            e.printStackTrace();
+        }
 
 
-        try(FileInputStream fileInputStream = new FileInputStream(tempFile)) {
-            mRequest = mApi.putFileRequest(prepareTravelDirName() + fileName, fileInputStream, mFileLen, null, progressListener);
+        return null;
+    }
 
+    private Boolean uploadFile() {
+        try (FileInputStream fileInputStream = new FileInputStream(tempFile)) {
+            mRequest = TTMainActivity.getmApi().putFileRequest(prepareTravelDirName() + fileName, fileInputStream, mFileLen, null, progressListener);
             if (mRequest != null) {
-                mRequest.upload();
+                DropboxAPI.Entry entry = mRequest.upload();
                 publishProgress(100L);
+                TTMainActivity.getImages().get(TTMainActivity.getImages().size()-1).put("path", entry.path);
                 return true;
             }
-
-        } catch (DropboxException | IOException e) {
+        } catch (DropboxException | IOException | JSONException e) {
             e.printStackTrace();
         }
         return false;
@@ -92,11 +119,21 @@ public class UploadToServer extends AsyncTask<Void, Long, Boolean> {
 
     @Override
     protected void onPostExecute(Boolean result) {
-        mDialog.dismiss();
-        if (result) {
-            showToast("Zdjęcie przesłane pomyślnie");
-        } else {
-            showToast("Błąd w trakcie przesyłania zdjęcia");
+
+        switch (req){
+            case 1 : {
+                mDialog.dismiss();
+                if (result) {
+                    showToast("Zdjęcie przesłane pomyślnie");
+                } else {
+                    showToast("Błąd w trakcie przesyłania zdjęcia");
+                }
+                break;
+            }
+            case 2 : {
+                TTMainActivity.getImages().clear();
+                break;
+            }
         }
     }
 

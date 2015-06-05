@@ -5,10 +5,12 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -27,6 +29,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -53,10 +59,8 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
     private static List<GeoPoint> points = new ArrayList<>();
 
     //img
-    private static Uri fileUri;
     private static String picturePath;
-    private static Uri selectedImage;
-    private static Bitmap photo;
+    private static List<JSONObject> images = new ArrayList<>();
 
     //DROPBOX
     final static private String APP_KEY = "iii0xdl1te6r4do";
@@ -64,8 +68,11 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
     private static final String ACCOUNT_PREFS_NAME = "prefs";
     private static final String ACCESS_KEY_NAME = "ACCESS_KEY";
     private static final String ACCESS_SECRET_NAME = "ACCESS_SECRET";
+    private boolean mLoggedIn = false;
     private static DropboxAPI<AndroidAuthSession> mApi;
     private static String travelDirName;
+    private static String secret;
+    private static String userUID;
 
 
     @Override
@@ -91,7 +98,10 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
 
         AndroidAuthSession session = buildSession();
         mApi = new DropboxAPI<>(session);
-        mApi.getSession().startOAuth2Authentication(TTMainActivity.this);
+        if (!mLoggedIn) {
+            mApi.getSession().startOAuth2Authentication(TTMainActivity.this);
+        }
+        new DropBoxConnector().execute();
 
         instance = this;
     }
@@ -105,6 +115,7 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
             try {
                 session.finishAuthentication();
                 storeAuth(session);
+                mLoggedIn = true;
             } catch (IllegalStateException e) {
                 e.printStackTrace();
             }
@@ -119,6 +130,7 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
             edit.putString(ACCESS_KEY_NAME, "oauth2:");
             edit.putString(ACCESS_SECRET_NAME, oauth2AccessToken);
             edit.apply();
+            secret = oauth2AccessToken;
         }
     }
 
@@ -137,7 +149,9 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
         if (key == null || secret == null || key.length() == 0 || secret.length() == 0) return;
 
         if (key.equals("oauth2:")) {
+            TTMainActivity.secret = secret;
             session.setOAuth2AccessToken(secret);
+            mLoggedIn = true;
         } else {
             session.setAccessTokenPair(new AccessTokenPair(key, secret));
         }
@@ -193,7 +207,7 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
             points.add(new GeoPoint(location.getLatitude(), location.getLongitude(), new Date()));
             List<LatLng> latLngs = convertGeoPointsToLatLgns(points);
             addPolylineToMap(latLngs);
-            updateCamera(latLngs.get(latLngs.size()-1));
+            updateCamera(latLngs.get(latLngs.size() - 1));
         }
 
     }
@@ -207,7 +221,7 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
     }
 
     public void upload() {
-        new UploadToServer(this, mApi).execute();
+        new DropBoxConnector(this).execute();
 
     }
 
@@ -215,7 +229,6 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
         if (getApplicationContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_CAMERA)) {
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
             startActivityForResult(intent, 100);
 
         } else {
@@ -226,8 +239,23 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == 100 && resultCode == RESULT_OK) {
 
-            selectedImage = data.getData();
-            photo = (Bitmap) data.getExtras().get("data");
+            try {
+                if (!images.isEmpty() && images.get(images.size()-1).get("path") == null){
+                    images.remove(images.size()-1);
+                }
+                JSONObject image = new JSONObject();
+                JSONObject imageLocation = new JSONObject();
+                imageLocation.put("latitude", location.getLatitude());
+                imageLocation.put("longitude", location.getLongitude());
+                imageLocation.put("date", new Date().getTime());
+                image.put("location", imageLocation);
+                images.add(image);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+
+            Uri selectedImage = data.getData();
 
             String[] filePathColumn = {MediaStore.Images.Media.DATA};
             Cursor cursor = getContentResolver().query(selectedImage,
@@ -240,8 +268,30 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
 
             Bitmap photo = (Bitmap) data.getExtras().get("data");
             ImageView imageView = (ImageView) findViewById(R.id.Imageprev);
+
+            photo = rotateImage(photo);
             imageView.setImageBitmap(photo);
         }
+    }
+
+    private Bitmap rotateImage(Bitmap photo) {
+        try {
+            ExifInterface exif = new ExifInterface(picturePath);
+            String orientString = exif.getAttribute(ExifInterface.TAG_ORIENTATION);
+            int orientation = orientString != null ? Integer.parseInt(orientString) :  ExifInterface.ORIENTATION_NORMAL;
+            int rotationAngle = 0;
+            if (orientation == ExifInterface.ORIENTATION_ROTATE_90) rotationAngle = 90;
+            else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) rotationAngle = 180;
+            else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) rotationAngle = 270;
+            if(rotationAngle != 0) {
+                Matrix matrix = new Matrix();
+                matrix.postRotate(rotationAngle);
+                photo = Bitmap.createBitmap(photo, 0, 0, photo.getWidth(), photo.getHeight(), matrix, true);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return photo;
     }
 
     private List<LatLng> convertGeoPointsToLatLgns(List<GeoPoint> geoPoints){
@@ -280,10 +330,6 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
         return location;
     }
 
-    public static String getCurrentTravelUri() {
-        return currentTravelUri;
-    }
-
     public static void setCurrentTravelUri(String currentTravelUri) {
         TTMainActivity.currentTravelUri = currentTravelUri;
     }
@@ -302,5 +348,21 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
 
     public static String getPicturePath() {
         return picturePath;
+    }
+
+    public static String getUserUID() {
+        return userUID;
+    }
+
+    public static void setUserUID(String userUID) {
+        TTMainActivity.userUID = userUID;
+    }
+
+    public static List<JSONObject> getImages() {
+        return images;
+    }
+
+    public static DropboxAPI<AndroidAuthSession> getmApi() {
+        return mApi;
     }
 }

@@ -1,6 +1,5 @@
 package com.github.danielwojciechowski.ttmobile;
 
-import android.location.Location;
 import android.os.AsyncTask;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
@@ -21,7 +20,6 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Date;
 import java.util.List;
 
 class ApiFetcher extends AsyncTask<URL, Integer, Void> {
@@ -52,7 +50,7 @@ class ApiFetcher extends AsyncTask<URL, Integer, Void> {
                     break;
                 }
                 case 2: {
-                    createTravel();
+                    /*createTravel();*/
                     break;
                 }
                 case 3: {
@@ -85,12 +83,12 @@ class ApiFetcher extends AsyncTask<URL, Integer, Void> {
 
     }
 
-    private void createTravel() throws IOException, JSONException {
+/*    private void createTravel() throws IOException, JSONException {
         HttpRequest request = requestFactory.buildPostRequest(url, ByteArrayContent.fromString("application/json", prepareDataObject().toString()));
         HttpResponse httpResponse = request.execute();
         TTMainActivity.setCurrentTravelUri(httpResponse.getHeaders().getLocation());
         Tab1.setTextVal(httpResponse.getHeaders().getLocation());
-    }
+    }*/
 
     private void postTravel() throws IOException, JSONException {
         HttpRequest request = requestFactory.buildPostRequest(url, ByteArrayContent.fromString("application/json", prepareFullTravelObject().toString()));
@@ -99,30 +97,34 @@ class ApiFetcher extends AsyncTask<URL, Integer, Void> {
         Tab1.setTextVal(httpResponse.getHeaders().getLocation());
     }
 
-    private void createCheckPoint() throws IOException, JSONException {
+/*    private void createCheckPoint() throws IOException, JSONException {
         HttpRequest request = requestFactory.buildPutRequest(new GenericUrl(TTMainActivity.getCurrentTravelUri()), ByteArrayContent.fromString("application/json", prepareDataObject().toString()));
         HttpResponse httpResponse = request.execute();
         TTMainActivity.setCurrentTravelUri(httpResponse.getHeaders().getLocation());
         Tab1.setTextVal(httpResponse.getHeaders().getLocation());
-    }
+    }*/
 
-    private JSONObject prepareDataObject() throws JSONException {
+/*    private JSONObject prepareDataObject() throws JSONException {
         Location location = TTMainActivity.getInstance().getLocation();
         JSONObject trace = new JSONObject();
-        JSONArray list = new JSONArray();
-        JSONObject point = new JSONObject();
-        point.put("latitude", location.getLatitude());
-        point.put("longitude", location.getLongitude());
-        point.put("date", new Date().getTime());
-        list.put(point);
-        trace.put("trace", list);
+        JSONArray points = new JSONArray();
+        JSONObject trackPoint = new JSONObject();
+
+        trackPoint.put("latitude", location.getLatitude());
+        trackPoint.put("longitude", location.getLongitude());
+        trackPoint.put("date", new Date().getTime());
+        points.put(trackPoint);
+        trace.put("trace", points);
+
         return trace;
-    }
+    }*/
 
     private JSONObject prepareFullTravelObject() throws JSONException {
-        List<GeoPoint> points = TTMainActivity.getInstance().getPoints();
+        List<GeoPoint> points = TTMainActivity.getPoints();
         JSONObject trace = new JSONObject();
         JSONArray list = new JSONArray();
+        JSONArray images = new JSONArray();
+
         for(GeoPoint geoPoint : points) {
             JSONObject point = new JSONObject();
             point.put("latitude", geoPoint.getLatitude());
@@ -131,6 +133,14 @@ class ApiFetcher extends AsyncTask<URL, Integer, Void> {
             list.put(point);
         }
         trace.put("trace", list);
+
+        trace.put("userUID", TTMainActivity.getUserUID());
+
+        for (JSONObject image : TTMainActivity.getImages()){
+            images.put(image);
+        }
+        trace.put("photos", images);
+
         return trace;
     }
 
