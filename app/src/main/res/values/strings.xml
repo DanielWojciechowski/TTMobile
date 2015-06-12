@@ -4,4 +4,7 @@
 
     <string name="switch_button_on">Zapisywanie podróży: Włączone</string>
     <string name="switch_button_off">Zapisywanie podróży: Wyłączone</string>
+    <string name="photoButton">Zrób zdjęcie</string>
+    <string name="uploadButton">Prześlij zdjęcie</string>
+    <string name="appTitle">Travel Tracker Mobile</string>
 </resources>

@@ -63,8 +63,8 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
     private static List<JSONObject> images = new ArrayList<>();
 
     //DROPBOX
-    final static private String APP_KEY = "iii0xdl1te6r4do";
-    final static private String APP_SECRET = "8ov9jpb30eh9h45";
+    final static private String APP_KEY = "f85ls6dgmuswl33";
+    final static private String APP_SECRET = "es8rsn6691wjffs";
     private static final String ACCOUNT_PREFS_NAME = "prefs";
     private static final String ACCESS_KEY_NAME = "ACCESS_KEY";
     private static final String ACCESS_SECRET_NAME = "ACCESS_SECRET";
