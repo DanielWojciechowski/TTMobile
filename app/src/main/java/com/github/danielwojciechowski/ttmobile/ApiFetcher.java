@@ -46,11 +46,10 @@ class ApiFetcher extends AsyncTask<URL, Integer, Void> {
         try {
             switch (req){
                 case 1: {
-                    fetchAllTravels();
+                    /*fetchAllTravels();*/
                     break;
                 }
                 case 2: {
-                    /*createTravel();*/
                     break;
                 }
                 case 3: {
@@ -68,56 +67,29 @@ class ApiFetcher extends AsyncTask<URL, Integer, Void> {
     protected void onPostExecute(Void result) {
         switch (req){
             case 1: {
-                Tab1.setTextView();
+//                Tab1.setTextView();
                 break;
             }
             case 2: {
-                Tab1.setTextView();
+//                Tab1.setTextView();
                 break;
             }
             case 3: {
-                Tab1.setTextView();
+                TTMainActivity.showToast();
                 break;
             }
         }
 
     }
 
-/*    private void createTravel() throws IOException, JSONException {
-        HttpRequest request = requestFactory.buildPostRequest(url, ByteArrayContent.fromString("application/json", prepareDataObject().toString()));
-        HttpResponse httpResponse = request.execute();
-        TTMainActivity.setCurrentTravelUri(httpResponse.getHeaders().getLocation());
-        Tab1.setTextVal(httpResponse.getHeaders().getLocation());
-    }*/
-
     private void postTravel() throws IOException, JSONException {
         HttpRequest request = requestFactory.buildPostRequest(url, ByteArrayContent.fromString("application/json", prepareFullTravelObject().toString()));
         HttpResponse httpResponse = request.execute();
-        TTMainActivity.setCurrentTravelUri(httpResponse.getHeaders().getLocation());
-        Tab1.setTextVal(httpResponse.getHeaders().getLocation());
+        final String location = httpResponse.getHeaders().getLocation();
+        TTMainActivity.setCurrentTravelUri(location);
     }
 
-/*    private void createCheckPoint() throws IOException, JSONException {
-        HttpRequest request = requestFactory.buildPutRequest(new GenericUrl(TTMainActivity.getCurrentTravelUri()), ByteArrayContent.fromString("application/json", prepareDataObject().toString()));
-        HttpResponse httpResponse = request.execute();
-        TTMainActivity.setCurrentTravelUri(httpResponse.getHeaders().getLocation());
-        Tab1.setTextVal(httpResponse.getHeaders().getLocation());
-    }*/
 
-/*    private JSONObject prepareDataObject() throws JSONException {
-        Location location = TTMainActivity.getInstance().getLocation();
-        JSONObject trace = new JSONObject();
-        JSONArray points = new JSONArray();
-        JSONObject trackPoint = new JSONObject();
-
-        trackPoint.put("latitude", location.getLatitude());
-        trackPoint.put("longitude", location.getLongitude());
-        trackPoint.put("date", new Date().getTime());
-        points.put(trackPoint);
-        trace.put("trace", points);
-
-        return trace;
-    }*/
 
     private JSONObject prepareFullTravelObject() throws JSONException {
         List<GeoPoint> points = TTMainActivity.getPoints();
@@ -144,9 +116,8 @@ class ApiFetcher extends AsyncTask<URL, Integer, Void> {
         return trace;
     }
 
-    private void fetchAllTravels() throws IOException {
+/*    private void fetchAllTravels() throws IOException {
         HttpRequest request = requestFactory.buildGetRequest(url);
         HttpResponse httpResponse = request.execute();
-        Tab1.setTextVal(httpResponse.parseAsString());
-    }
+    }*/
 }

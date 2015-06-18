@@ -6,7 +6,7 @@
     <ImageView
         android:id="@+id/Imageprev"
         android:layout_width="match_parent"
-        android:layout_height="400dp"
+        android:layout_height="310dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
         android:layout_below="@+id/cpic" />
@@ -16,35 +16,84 @@
         android:layout_width="fill_parent"
         android:layout_height="1dp"
         android:background="#FF000000"
-        android:layout_alignTop="@+id/apiWindow"
         android:layout_alignParentStart="true" />
 
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_below="@+id/toggleButton">
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="2"
+        android:baselineAligned="false">
 
-        <Button
-            android:id="@+id/cpic"
-            android:text="@string/photoButton"
+        <LinearLayout
+            android:layout_height="fill_parent"
+            android:orientation="vertical"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_weight ="0.50" />
+            android:layout_weight="1">
 
-        <Button
-            android:id="@+id/up"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/uploadButton"
-            android:layout_marginTop="10dp"
-            android:layout_weight="0.19" />
+            <TextView
+                android:id="@+id/duration"
+                android:text="@string/durationTime"
+                android:layout_width="196dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="90dp"
+                android:textSize="25sp"
+                android:layout_marginLeft="10dp" />
 
+            <TextView
+                android:id="@+id/durationVal"
+                android:text="@string/defaultDurationVal"
+                android:layout_width="196dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="-20dp"
+                android:textSize="25sp"
+                android:layout_marginLeft="10dp" />
+
+            <Button
+                android:id="@+id/up"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="@string/uploadButton"
+                android:layout_marginTop="-10dp"
+                android:theme="@android:style/MediaButton" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_height="fill_parent"
+            android:orientation="vertical"
+            android:layout_width="0dp"
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/distance"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="@string/distance"
+                android:layout_marginTop="90dp"
+                android:theme="@android:style/MediaButton"
+                android:layout_gravity="center_vertical"
+                android:textSize="25sp"
+                android:layout_marginLeft="10dp" />
+
+            <TextView
+                android:id="@+id/distanceVal"
+                android:text="@string/defaultDistanceVal"
+                android:layout_width="196dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="-20dp"
+                android:textSize="25sp"
+                android:layout_marginLeft="10dp" />
+
+            <Button
+                android:id="@+id/cpic"
+                android:text="@string/photoButton"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="-10dp" />
+
+        </LinearLayout>
     </LinearLayout>
-
-
-
-
 
     <ToggleButton
         android:layout_width="wrap_content"
@@ -58,20 +107,11 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:id="@+id/apiWindow"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="56dp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:text="@string/appTitle"
         android:id="@+id/titleTxt"
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
-        android:layout_alignBottom="@+id/apiWindow"
         android:textSize="35sp"
         android:textIsSelectable="true"
         android:textColor="#ff02038b"

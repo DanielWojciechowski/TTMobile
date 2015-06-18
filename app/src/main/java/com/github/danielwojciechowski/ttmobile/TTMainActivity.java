@@ -57,10 +57,12 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
     private static boolean trackingMode = false;
     private static String currentTravelUri;
     private static List<GeoPoint> points = new ArrayList<>();
+    private static double distance = 0;
 
     //img
     private static String picturePath;
     private static List<JSONObject> images = new ArrayList<>();
+    private static ImageView imageView;
 
     //DROPBOX
     final static private String APP_KEY = "f85ls6dgmuswl33";
@@ -84,6 +86,7 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
 
         pager = (ViewPager) findViewById(R.id.pager);
         pager.setAdapter(adapter);
+
 
         tabs = (SlidingTabLayout) findViewById(R.id.tabs);
         tabs.setDistributeEvenly(true);
@@ -206,8 +209,16 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
             //new ApiFetcher(3).execute();
             points.add(new GeoPoint(location.getLatitude(), location.getLongitude(), new Date()));
             List<LatLng> latLngs = convertGeoPointsToLatLgns(points);
-            addPolylineToMap(latLngs);
+            addPolylineToMap(latLngs); //TODO: czy to jest dobrze rysowane?
             updateCamera(latLngs.get(latLngs.size() - 1));
+            if(latLngs.size() > 1){
+                Location locationFrom = new Location("start");
+                LatLng latLngFrom = latLngs.get(latLngs.size() - 2);
+                locationFrom.setLatitude(latLngFrom.latitude);
+                locationFrom.setLongitude(latLngFrom.longitude);
+                distance += locationFrom.distanceTo(location);
+                Tab1.getDistanceValText().setText(distance < 1000 ? String.format("%.0f", distance) + " m" : String.format("%.2f", distance/1000) + " km");
+            }
         }
 
     }
@@ -267,9 +278,8 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
             cursor.close();
 
             Bitmap photo = (Bitmap) data.getExtras().get("data");
-            ImageView imageView = (ImageView) findViewById(R.id.Imageprev);
-
             photo = rotateImage(photo);
+            imageView = (ImageView) findViewById(R.id.Imageprev);
             imageView.setImageBitmap(photo);
         }
     }
@@ -300,6 +310,11 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
             resultList.add(new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude()));
         }
         return resultList;
+    }
+
+    public static void showToast() {
+        Toast error = Toast.makeText(TTMainActivity.getInstance().getApplicationContext(), "Wycieczkę zapisano!", Toast.LENGTH_LONG);
+        error.show();
     }
 
     @Override
@@ -364,5 +379,17 @@ public class TTMainActivity extends FragmentActivity implements LocationListener
 
     public static DropboxAPI<AndroidAuthSession> getmApi() {
         return mApi;
+    }
+
+    public static ImageView getImageView() {
+        return imageView;
+    }
+
+    public static double getDistance() {
+        return distance;
+    }
+
+    public static void setDistance(double distance) {
+        TTMainActivity.distance = distance;
     }
 }
